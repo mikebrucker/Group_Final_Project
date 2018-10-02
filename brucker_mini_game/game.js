@@ -3,7 +3,7 @@ var config = {
     parent: 'content',
     width: 640,
     height: 640,
-    parent: "game-container",
+    parent: "gamecontainer",
     physics: {
         default: 'arcade',
         arcade: {
@@ -19,28 +19,31 @@ var config = {
 
 const game = new Phaser.Game(config);
 const level = [
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ],
-    [, , , , , , , , , , , , , , , , , ]
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0],
+    [0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0],
+    [0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0]
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 let player,
 walls,
-cursors;
+cursors,
+worldMap;
 
 function preload() {
     this.load.spritesheet('blob', 'assets/blob_up_down.png', { frameWidth: 34, frameHeight: 34 });
@@ -57,7 +60,7 @@ function create() {
     worldLayer.setCollisionBetween(1, 213, true, 'World');
     worldLayer.setCollisionBetween(215, 407, true, 'World');
     worldLayer.setCollisionBetween(409, 512, true, 'World');
-    player = this.physics.add.sprite(54, 54, 'blob').setSize(32,32);
+    player = this.physics.add.sprite(48, 48, 'blob').setSize(32, 32);
     this.physics.add.collider(player, worldLayer);
     cursors = this.input.keyboard.createCursorKeys();
     
@@ -95,6 +98,37 @@ function create() {
         frameRate: 20
     });
     
+    worldMap = worldLayer;
+}
+
+// If tile next to sprite can be walked on the sprite will be aligned with it
+function turnLeft(sprite) {
+    let i = Math.floor(sprite.x/32);
+    let j = Math.floor(sprite.y/32);
+    if (level[j][i - 1] === 1) {
+        player.y = (j * 32) + 16;
+    };
+}
+function turnRight(sprite) {
+    let i = Math.floor(sprite.x/32);
+    let j = Math.floor(sprite.y/32);
+    if (level[j][i + 1] === 1) {
+        player.y = (j * 32) + 16;
+    };
+}
+function turnUp(sprite) {
+    let i = Math.floor(sprite.x/32);
+    let j = Math.floor(sprite.y/32);
+    if (level[j - 1][i] === 1) {
+        player.x = (i * 32) + 16;
+    };
+}
+function turnDown(sprite) {
+    let i = Math.floor(sprite.x/32);
+    let j = Math.floor(sprite.y/32);
+    if (level[j + 1][i] === 1) {
+        player.x = (i * 32) + 16;
+    };
 }
 
 function update() {
@@ -102,17 +136,21 @@ function update() {
         player.setVelocityX(-100);
         player.setVelocityY(0);
         player.anims.play('left', true);
+        turnLeft(player);
     } else if (cursors.right.isDown) {
         player.setVelocityX(100);
         player.setVelocityY(0);
+        turnRight(player);
         player.anims.play('right', true);
     } else if (cursors.up.isDown) {
         player.setVelocityY(-100);
         player.setVelocityX(0);
+        turnUp(player);
         player.anims.play('up', true);
     } else if (cursors.down.isDown) {
         player.setVelocityY(100);
         player.setVelocityX(0);
+        turnDown(player);
         player.anims.play('up', true);
     } else {
         player.setVelocity(0);
