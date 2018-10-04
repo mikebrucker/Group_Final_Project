@@ -1,0 +1,53 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Profiles</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Avatar</th>
+      <th>Fname</th>
+      <th>Lname</th>
+      <th>Total games played</th>
+      <th>Blob games played</th>
+      <th>Blob games won</th>
+      <th>Blob games lost</th>
+      <th>Ogre games played</th>
+      <th>Ogre games won</th>
+      <th>Ogre games lost</th>
+      <th>Sky games played</th>
+      <th>Blob game high score</th>
+      <th>Ogre game high score</th>
+      <th>Sky game high score</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @profiles.each do |profile| %>
+      <tr>
+        <td><%= image_tag profile.avatar.variant(resize: "100x100") %></td>
+        <td><%= profile.fname %></td>
+        <td><%= profile.lname %></td>
+        <td><%= profile.total_games_played %></td>
+        <td><%= profile.blob_games_played %></td>
+        <td><%= profile.blob_games_won %></td>
+        <td><%= profile.blob_games_lost %></td>
+        <td><%= profile.ogre_games_played %></td>
+        <td><%= profile.ogre_games_won %></td>
+        <td><%= profile.ogre_games_lost %></td>
+        <td><%= profile.sky_games_played %></td>
+        <td><%= profile.blob_game_high_score %></td>
+        <td><%= profile.ogre_game_high_score %></td>
+        <td><%= profile.sky_game_high_score %></td>
+        <td><%= link_to 'Show', profile %></td>
+        <td><%= link_to 'Edit', edit_profile_path(profile) %></td>
+        <td><%= link_to 'Destroy', profile, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Profile', new_profile_path %>

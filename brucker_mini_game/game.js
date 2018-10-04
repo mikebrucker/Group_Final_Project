@@ -28,7 +28,7 @@ const level = [
     [0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
     [0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0],
     [0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0, 1, 1, 8, 8, 1, 1, 0, 1, 0, 0, 0, 0, 0],
     [3, 3, 3, 3, 3, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 3],
     [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
     [0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0],
@@ -50,14 +50,16 @@ worldMap,
 timer,
 timerInterval,
 invincibleTimer,
+createSkeletons,
+maxSkeletons = 4,
 finalTime = 0;
 
 function preload() {
     this.load.spritesheet('blob_death', 'assets/blob_death_grayscale.png', { frameWidth: 80, frameHeight: 80 });
     this.load.spritesheet('blob_child', 'assets/blob_child_grayscale.png', { frameWidth: 26, frameHeight: 32 });
-    this.load.spritesheet('blob', 'assets/blob_up_down.png', { frameWidth: 34, frameHeight: 34 });
+    this.load.spritesheet('blob', 'assets/blob_up_down_yellow.png', { frameWidth: 34, frameHeight: 34 });
     this.load.spritesheet('blob_left', 'assets/blob_walk_left_yellow.png', { frameWidth: 34, frameHeight: 34 });
-    this.load.spritesheet('blob_right', 'assets/blob_walk_right.png', { frameWidth: 34, frameHeight: 34 });
+    this.load.spritesheet('blob_right', 'assets/blob_walk_right_yellow.png', { frameWidth: 34, frameHeight: 34 });
     this.load.spritesheet('gem', 'assets/gem.png', { frameWidth: 20, frameHeight: 30 });
     this.load.spritesheet('skeleton', 'assets/skeleton_sprite_sheet.png', { frameWidth: 32, frameHeight: 48 });
     this.load.image('tiles', 'assets/tileset.png');
@@ -90,7 +92,7 @@ function create() {
     
     for (let i = 0; i < level.length; i++) {
         for (let j = 0; j < level.length; j++) {
-            if (level[i][j] === 1) {
+            if ( (level[i][j] === 1) || (level[i][j] === 8) )  {
                 let col = Phaser.Display.Color.RandomRGB(0,255),
                 randomColor = `0x${rgbToHex(col.r, col.g, col.b)}`;
                 blobs.create((j * 32) + 16, (i * 32) + 16, 'blob_child').setTint(randomColor).setScale(0.75);
@@ -101,8 +103,10 @@ function create() {
         }
     }
     createSkeletons = setInterval(function() {
-        let skeleton = skeletons.create(320, 352, 'skeleton');
-        skeleton.setScale(0.666).setVelocityY(-60)
+        if (skeletons.countActive(true) < maxSkeletons) {
+            let skeleton = skeletons.create(320, 352, 'skeleton');
+            skeleton.setScale(0.666).setVelocityY(-60)
+        }
     }, 5000);
     player = this.physics.add.sprite(320, 496, 'blob').setSize(32, 32);
 
@@ -123,7 +127,7 @@ function create() {
     this.anims.create({
         key: 'idle',
         frames: this.anims.generateFrameNumbers('blob_child', { start: 0, end: 7 }),
-        frameRate: 8,
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
@@ -135,25 +139,25 @@ function create() {
     this.anims.create({
         key: 'collect',
         frames: this.anims.generateFrameNumbers('blob_death', { start: 0, end: 5 }),
-        frameRate: 8,
+        frameRate: 10,
         repeat: 0
     })
     this.anims.create({
         key: 'left',
         frames: this.anims.generateFrameNumbers('blob_left', { start: 0, end: 7 }),
-        frameRate: 6,
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'right',
         frames: this.anims.generateFrameNumbers('blob_right', { start: 0, end: 7 }),
-        frameRate: 8,
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'up',
-        frames: this.anims.generateFrameNumbers('blob', { start: 1, end: 2 }),
-        frameRate: 5,
+        frames: this.anims.generateFrameNumbers('blob', { start: 1, end: 6 }),
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
@@ -285,6 +289,9 @@ function turnDown(sprite) {
         player.x = (i * 32) + 16;
     };
 }
+
+// Finds the tile underneath and the tiles around the skeleton as well as getting the alignment coordinates
+// Gives an id for the skeleton name to ensure the skeleton makes the decision to turn once and won't run again until a new intersection
 function findTiles(skeleton) {
     let i = Math.floor(skeleton.x/32);
     let j = Math.floor(skeleton.y/32);
@@ -317,22 +324,22 @@ function update() {
     }
     
     if (cursors.left.isDown) {
-        player.setVelocityX(-500);
+        player.setVelocityX(-160);
         player.setVelocityY(0);
         player.anims.play('left', true);
         turnLeft(player);
     } else if (cursors.right.isDown) {
-        player.setVelocityX(500);
+        player.setVelocityX(160);
         player.setVelocityY(0);
         turnRight(player);
         player.anims.play('right', true);
     } else if (cursors.up.isDown) {
-        player.setVelocityY(-500);
+        player.setVelocityY(-160);
         player.setVelocityX(0);
         turnUp(player);
         player.anims.play('up', true);
     } else if (cursors.down.isDown) {
-        player.setVelocityY(500);
+        player.setVelocityY(160);
         player.setVelocityX(0);
         turnDown(player);
         player.anims.play('up', true);
@@ -370,63 +377,34 @@ function update() {
 
         let tiles = findTiles(skeleton);
         if (tiles[6] != 0) {
-            let rand_two = Phaser.Math.Between(1,3);
-            let rand_three = Phaser.Math.Between(1,3);
-            if (skeleton.body.blocked.up) {
-                if (rand_three === 1) {
+            let rand_two = Phaser.Math.Between(1,2),
+            rand_three = Phaser.Math.Between(1,3),
+            rand_four = Phaser.Math.Between(1,4),
+            skeletonTileX = Math.abs(tiles[4] - skeleton.x),
+            skeletonTileY = Math.abs(tiles[5] - skeleton.y);
+
+            // Skeleton chooses to go left or right after rising from the crypt
+            if ( (tiles[6] === 8) && (skeleton.name === '') && (skeletonTileY < 1) ) {
+                if (rand_two === 1) {
                     skeleton.setVelocity(-60, 0);
-                } else if (rand_three === 2) {
+                } else {
                     skeleton.setVelocity(60, 0);
-                } else {
-                    skeleton.setVelocity(0, 60);
                 }
-            } else if (skeleton.body.blocked.down) {
-                if (rand_three === 1) {
-                    skeleton.setVelocity(-60, 0);
-                } else if (rand_three === 2) {
-                    skeleton.setVelocity(60, 0);
-                } else {
-                    skeleton.setVelocity(0, -60);
-                }
-            } else if (skeleton.body.blocked.left) {
-                if (rand_three === 1) {
-                    skeleton.setVelocity(60, 0);
-                } else if (rand_three === 2) {
-                    skeleton.setVelocity(0, -60);
-                } else {
-                    skeleton.setVelocity(0, 60);
-                }
-            } else if (skeleton.body.blocked.right) {
-                if (rand_three === 1) {
-                    skeleton.setVelocity(-60, 0);
-                } else if (rand_three === 2) {
-                    skeleton.setVelocity(0, -60);
-                } else {
-                    skeleton.setVelocity(0, 60);
-                }
+                skeleton.name = tiles[7];
             }
-        
-            let distanceX = Math.abs(player.x - skeleton.x);
-            let distanceY = Math.abs(player.y - skeleton.y);
-            if (skeleton.name != tiles[7]) {
+
+            // Skeleton chooses a random direction at each intersection
+            if ( (skeleton.name != tiles[7]) && (skeletonTileX < 2) && (skeletonTileY < 2) ) {
                 if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
                     // 4 way intersection
-                    if (distanceX > distanceY) {
-                        if (player.x < skeleton.x) {
-                            skeleton.setVelocity(-60, 0);
-                            skeleton.y = tiles[5];
-                        } else {
-                            skeleton.setVelocity(60, 0);
-                            skeleton.y = tiles[5];
-                        }
+                    if (rand_four === 1) {
+                        skeleton.setVelocity(-60, 0);
+                    } else if (rand_four === 2) {
+                        skeleton.setVelocity(60, 0);
+                    } else if (rand_four === 3) {
+                        skeleton.setVelocity(0, -60);
                     } else {
-                        if (player.y < skeleton.y) {
-                            skeleton.setVelocity(0, -60);
-                            skeleton.x = tiles[4];
-                        } else {
-                            skeleton.setVelocity(0, 60)
-                            skeleton.x = tiles[4];
-                        }
+                        skeleton.setVelocity(0, 60)
                     }
                 } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
                     // 3 way Left is blocked
@@ -493,11 +471,13 @@ function update() {
                         skeleton.setVelocity(0, 60);
                     }
                 }
+
                 if (skeleton.body.velocity.x != 0) {
                     skeleton.y = tiles[5];
                 } else {
                     skeleton.x = tiles[4];
                 }
+
                 skeleton.name = tiles[7];
             }
         }
