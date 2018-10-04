@@ -1,4 +1,4 @@
-let StateTitle={    
+const StateTitle={    
     
     preload:function(){
         game.load.image("background","images/main/background.png");
@@ -34,9 +34,20 @@ let StateTitle={
             , align: "center"
         });
         this.titleText.anchor.set(0.5, 0.5);
-         this.buttonStart = game.add.button(game.world.centerX,game.world.centerY+250,"buttons",this.play,this,6,7,6);
+
          //center the button
+         this.buttonStart = game.add.button(game.world.centerX,game.world.centerY+220,"buttons",this.play,this,6,7,6);
          this.buttonStart.anchor.set(0.5,0.5);
+
+         this.copyText = game.add.text(game.world.centerX, 600, "Copyright 2018 Notintendo", {
+            font: "10px Press Start 2P"  
+            , fill: "#ffffff"
+            , stroke: "#222222"
+            , strokeThickness: 4
+            , align: "center"
+        });
+        this.copyText.anchor.set(0.5, 0.5);
+
 
      },
      play:function() {

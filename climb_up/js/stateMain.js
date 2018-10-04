@@ -1,11 +1,13 @@
-var StateMain={    
+const StateMain={    
     
     preload:function(){
         game.load.image("background","images/main/background.png");
         game.load.image("platform", "images/main/platform.png")
         game.load.spritesheet("soundButtons", "images/ui/soundButtons.png", 44, 44, 4);
         game.load.spritesheet("traveler", "images/main/traveler.png",64,64,33);
-        game.load.spritesheet("coins", "images/main/coin.png",15.875,16,8);
+        game.load.spritesheet("coins", "images/main/coins_all.png",15.875,16,8);
+        game.load.spritesheet("wasp", "images/main/wasp.png",96,96,11);
+
 
         game.load.spritesheet("bomb", "images/main/bomb.png",14,17,1);
         game.load.audio("backgroundMusic", "sounds/background.mp3");
@@ -24,11 +26,13 @@ var StateMain={
 
          //start the physics engine
          game.physics.startSystem(Phaser.Physics.ARCADE);
-        this.traveler = game.add.sprite(100,590,"traveler");
 
-        this.traveler.animations.add("idle",[6,9,10,11,12,13],12,true);
+         //the player & animations
+        this.traveler = game.add.sprite(100,590,"traveler");
         this.traveler.animations.add("run",[0,1,2,3,4,5],12,true);
-        this.traveler.animations.add("jump",[14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32],12,false);
+        this.traveler.animations.add("idle",[6,9,10,11,12,13],12,true);
+        this.traveler.animations.add("jump",[14,15,16,17,18,19,20,21,22,23],12,false);
+        this.traveler.animations.add("fall",[24,25,26,27,28,29,30,31,32],12,true);
 
         //sounds
         this.jump = game.add.audio("jump");
@@ -57,6 +61,19 @@ var StateMain={
          this.coins.createMultiple(40, "coins");
          this.coins.setAll('checkWorldBounds', true);
          this.coins.setAll('outOfBoundsKill', true);
+         this.coins.callAll('animations.add', 'animations', 'coin_rotate', [0,1,2,3,4,5,6,7], 12,true);
+        this.coins.callAll('play', null, 'coin_rotate');
+        this.coins.scale.setTo(1.8);
+
+
+        //the wasps
+        this.wasps = game.add.group();
+        this.wasps.createMultiple(40, "wasp");
+        this.wasps.setAll('checkWorldBounds', true);
+        this.wasps.setAll('outOfBoundsKill', true);
+        this.wasps.callAll('animations.add', 'animations', 'fly', [0,1,2,3,4,5,6,7,8,9,10], 12,true);
+        this.wasps.callAll('play', null, 'fly');
+
          
           //text
           this.scoreText = game.add.text(game.world.centerX,60,"0");
@@ -82,7 +99,9 @@ var StateMain={
          this.ground.scale.y= 10;
          this.ground.enableBody = true;
 
-         game.physics.enable([this.traveler,this.platforms,this.ground,this.coins], Phaser.Physics.ARCADE);
+
+
+         game.physics.enable([this.traveler,this.platforms,this.ground,this.coins,this.wasps], Phaser.Physics.ARCADE);
          this.traveler.body.gravity.y = 500
          this.traveler.anchor.set(0.5,1);
          this.traveler.body.bounce.set(0.25);
@@ -91,15 +110,24 @@ var StateMain={
          
 
          this.ground.body.immovable = true;
-
+        //the platforms
          this.platforms.setAll('body.immovable', true);
          this.platforms.setAll("body.checkCollision.down", false);
-
          this.platforms.setAll("anchor.x", 0.5);
          this.platforms.setAll("anchor.y", 0.5);
          this.platforms.scale.setTo(1.8);
+         
+         this.wasps.setAll('body.immovable', true);
+         this.wasps.setAll("body.checkCollision.up", false);
+
+
+         
+
+         
                 //bring the traveler above background
                 this.traveler.bringToTop();
+       
+
 
          this.setListeners();
          this.updateButtons();
@@ -110,6 +138,8 @@ var StateMain={
      setListeners:function() {
         game.time.events.loop(Phaser.Timer.SECOND*3.5, this.launchPlatforms, this);
         game.time.events.loop(Phaser.Timer.SECOND*4.5, this.launchCoins, this);
+        game.time.events.loop(Phaser.Timer.SECOND*3, this.launchWasps, this);
+
 
         this.ground.body.velocity.y = 2;
         //enables the sprite to take inputs and then add the listener
@@ -144,6 +174,14 @@ var StateMain={
         coin.reset(xx,0);
         coin.body.velocity.y = 100;
         console.log(xx,"coin fired")
+
+    },
+    launchWasps: function(){
+        let wasp = this.wasps.getFirstDead();
+       let yy = game.rnd.integerInRange(10,580);
+        wasp.reset(0,yy);
+        wasp.body.velocity.x = 100;
+        console.log(yy,"wasp fired")
 
     },
      updateMusic: function () {
@@ -183,6 +221,7 @@ var StateMain={
      update:function(){ 
         game.physics.arcade.collide(this.traveler, this.ground);
         game.physics.arcade.collide(this.traveler, this.platforms);
+        game.physics.arcade.collide(this.traveler, this.wasps);
         game.physics.arcade.collide(this.traveler,this.coins,null,this.onCollect,this);
         if (this.traveler.body.y == 576) {
             this.backgroundMusic.stop();
@@ -215,6 +254,9 @@ var StateMain={
             //stop
          }else{
                 this.traveler.body.velocity.x = 0;
+        }
+        if (this.traveler.body.velocity.y > 150) {
+            this.traveler.animations.play("fall");
         }
      }     
  }

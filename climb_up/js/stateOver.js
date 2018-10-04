@@ -1,4 +1,4 @@
-let StateOver={    
+const StateOver={    
     
     preload:function(){
         game.load.image("background","images/main/background.png");
