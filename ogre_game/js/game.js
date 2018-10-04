@@ -1,13 +1,14 @@
 // create a new scene named "Game"
 let gameScene = new Phaser.Scene('Game');
 let welcomeTitle;
+let player;
 
 // game's configuration
 let config = {
   type: Phaser.AUTO,
   width: 960,
   height: 544,
-  scene: gameScene, 
+  scene: gameScene
 };
 
 // create a new game
@@ -16,6 +17,8 @@ let game = new Phaser.Game(config);
 //set up scene parameters
 gameScene.init = function() {
   this.playerSpeed = 1.5;
+  this.playerMaxY = 460;
+  this.playerMinY = 80;
   this.enemySpeed = 2;
   // set top and bottom boundaries for enemies. The higher the number, the lower the enemy drops on screen
   this.enemyMaxY = 460;
@@ -49,7 +52,9 @@ gameScene.create = function() {
   let powerUp2 = this.sound.add('powerUp2');
   let backgroundMusic = this.sound.add('backgroundMusic');
   backgroundMusic.play();
-  backgroundMusic.volume = 0.5;
+  backgroundMusic.volume = 0.4;
+  fail.volume = 0.5;
+  powerUp.volume = 0.5;
   backgroundMusic.loop = true;
 
   // player
@@ -106,12 +111,8 @@ gameScene.create = function() {
       } else {
           gameTimer.setText(`00:${seconds}`);
       }
-
-      // if (seconds > 27) {
-      //   welcomeTitle.setText('');
-      // }
-
       seconds--;
+
       // game over if seconds reach 0
       if (seconds === 0) {
         gameScene.gameLose();
@@ -132,32 +133,28 @@ gameScene.update = function() {
   // only if the player is alive
   if (!this.isPlayerAlive) {
     return;
-  }
-
+  } 
   // player controls
-
   if (cursors.right.isDown) {
     this.player.x += this.playerSpeed;
-  }
-
-  else if (cursors.left.isDown) {
+  } else if (cursors.left.isDown) {
     this.player.x -= this.playerSpeed;
-  }
-
-  else if (cursors.down.isDown) {
+  } else if (cursors.down.isDown) {
     this.player.y += this.playerSpeed;
-    
-  }
-
-  else if (cursors.up.isDown) {
+  } else if (cursors.up.isDown) {
     this.player.y -= this.playerSpeed;
   } 
+
+  if (this.playerMaxY > 460) {
+    this.playerSpeed = 0;
+  } else if (this.playerMinY < 80) {
+    this.playerSpeed = 0;
+  }
 
   // treasure collision
   if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.treasure.getBounds())) {
     this.gameWin();
   }
-
   // skeleton movement and collision
   let enemies = this.enemies.getChildren();
   let numEnemies = enemies.length;
@@ -173,6 +170,7 @@ gameScene.update = function() {
     } else if (enemies[i].y <= this.enemyMinY && enemies[i].speed < 0) {
       enemies[i].speed *= -1;
     }
+
 
     // skeleton collision with player
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), enemies[i].getBounds())) {
