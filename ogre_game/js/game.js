@@ -80,7 +80,7 @@ gameScene.create = function() {
 
   // set random speed of skeletons
   Phaser.Actions.Call(this.enemies.getChildren(), function(enemy) {
-    enemy.speed = Math.random() * 5 + 1;
+    enemy.speed = Math.random() * 6 + 1;
   }, this);
 
   // player is alive
@@ -90,13 +90,14 @@ gameScene.create = function() {
   this.cameras.main.resetFX();
   
   this.time.delayedCall(250, function() {
-    welcomeTitle = this.add.text(145, 500, 'Get to the chest in 20 seconds or less!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
+    welcomeTitle = this.add.text(145, 250, 'Get to the chest in 30 seconds or less!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
+    // array of arguments passed to callback
   }, [], this);
 
   // add a timer and set it
   let gameTimer = this.add.text(460, 20,'', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
 
-  let seconds = 20;
+  let seconds = 30;
 
   setInterval(function() {
       // if seconds are less than two digits, add an extra zero to the right of seconds
@@ -105,6 +106,11 @@ gameScene.create = function() {
       } else {
           gameTimer.setText(`00:${seconds}`);
       }
+
+      // if (seconds > 27) {
+      //   welcomeTitle.setText('');
+      // }
+
       seconds--;
       // game over if seconds reach 0
       if (seconds === 0) {
@@ -112,6 +118,12 @@ gameScene.create = function() {
     }
     // seconds decrement by 1
   }, 1000); 
+
+  setInterval(function() {
+    if (seconds > 27) {
+      welcomeTitle.setText('');
+    }
+  }, 2500);
 };
 
 // executed on every frame
@@ -155,7 +167,7 @@ gameScene.update = function() {
     // move skeletons
     enemies[i].y += enemies[i].speed;
 
-    // reverse movement if skeletons reach the edges
+    // reverse movement when skeletons reach the edges
     if (enemies[i].y >= this.enemyMaxY && enemies[i].speed > 0) {
       enemies[i].speed *= -1;
     } else if (enemies[i].y <= this.enemyMinY && enemies[i].speed < 0) {
@@ -198,6 +210,8 @@ gameScene.gameWin = function() {
 gameScene.gameLose = function() {
   // set text with x and y coordinates
   this.add.text(380, 250, 'Official loser!', { fontSize: '32px', fontFamily: 'Shojumaru', fill: '#E52346'});
+
+  seconds = 0;
 
   // flag to set player is dead
   this.isPlayerAlive = false;
