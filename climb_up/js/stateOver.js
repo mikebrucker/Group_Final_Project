@@ -2,14 +2,21 @@ const StateOver={
     
     preload:function(){
         game.load.image("background","images/main/background.png");
-        game.load.spritesheet("buttons","images/ui/buttons.png",265,75);
         game.load.image("plane","images/main/opp_aviator.png");
+        game.load.spritesheet("buttons","images/ui/buttons.png",265,75);
+        game.load.audio("backgroundMusic", "sounds/gameOver.mp3");
+
 
 
 
      },
      
-     create:function(){
+    create:function(){
+        this.backgroundMusic = game.add.audio("backgroundMusic");
+        this.backgroundMusic.volume = .5;
+        this.backgroundMusic.loop = true;
+        this.backgroundMusic.play();
+
         //background
         this.background = game.add.tileSprite(0,0,480,640,"background");
 
@@ -36,6 +43,7 @@ const StateOver={
          
      },
      replay:function() {
+        this.backgroundMusic.stop();
         game.state.start("StateMain");
      },
      update:function()
