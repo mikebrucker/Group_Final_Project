@@ -8,15 +8,12 @@ let config = {
   width: 960,
   height: 544,
   scene: gameScene, 
-  physics: {
-    default: 'arcade'
-  }
 };
 
-    // create the game, and pass it the configuration
+// create a new game
 let game = new Phaser.Game(config);
 
-// some parameters for our scene
+//set up scene parameters
 gameScene.init = function() {
   this.playerSpeed = 1.5;
   this.enemySpeed = 2;
@@ -58,10 +55,10 @@ gameScene.create = function() {
   // player
   this.player = this.add.sprite(40, this.sys.game.config.height / 2, 'player');
 
-  // scale your player down
+  // scale player size down
   this.player.setScale(0.5);
 
-  // treasture chest GOAL!!!
+  // treasure chest GOAL!!!
   this.treasure = this.add.sprite(this.sys.game.config.width - 80, this.sys.game.config.height / 2, 'treasure');
   this.treasure.setScale(0.6);
 
@@ -70,6 +67,7 @@ gameScene.create = function() {
     key: 'skeleton',
     repeat: 8,
     setXY: {
+      //set X and Y axis 
       x: 80,
       y: 100,
       stepX: 100,
@@ -77,10 +75,10 @@ gameScene.create = function() {
     }
   });
 
-  // scale enemies
+  // scale skeleton size
   Phaser.Actions.ScaleXY(this.enemies.getChildren(), -0.5, -0.5);
 
-  // set speeds
+  // set random speed of skeletons
   Phaser.Actions.Call(this.enemies.getChildren(), function(enemy) {
     enemy.speed = Math.random() * 5 + 1;
   }, this);
@@ -88,31 +86,35 @@ gameScene.create = function() {
   // player is alive
   this.isPlayerAlive = true;
 
-  // reset camera
+  // reset the camera
   this.cameras.main.resetFX();
   
   this.time.delayedCall(250, function() {
-    welcomeTitle = this.add.text(145, 500, 'Get to the chest in 30 seconds or less!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
+    welcomeTitle = this.add.text(145, 500, 'Get to the chest in 20 seconds or less!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
   }, [], this);
 
+  // add a timer and set it
   let gameTimer = this.add.text(460, 20,'', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
 
-  let seconds = 30;
+  let seconds = 20;
 
   setInterval(function() {
+      // if seconds are less than two digits, add an extra zero to the right of seconds
       if (seconds < 10) {
           gameTimer.setText(`00:0${seconds}`);
       } else {
           gameTimer.setText(`00:${seconds}`);
       }
       seconds--;
+      // game over if seconds reach 0
       if (seconds === 0) {
         gameScene.gameLose();
     }
+    // seconds decrement by 1
   }, 1000); 
 };
 
-// executed on every frame (60 times per second)
+// executed on every frame
 gameScene.update = function() {
 
   // only if the player is alive
@@ -144,23 +146,23 @@ gameScene.update = function() {
     this.gameWin();
   }
 
-  // enemy movement and collision
+  // skeleton movement and collision
   let enemies = this.enemies.getChildren();
   let numEnemies = enemies.length;
 
   for (let i = 0; i < numEnemies; i++) {
 
-    // move enemies
+    // move skeletons
     enemies[i].y += enemies[i].speed;
 
-    // reverse movement if reached the edges
+    // reverse movement if skeletons reach the edges
     if (enemies[i].y >= this.enemyMaxY && enemies[i].speed > 0) {
       enemies[i].speed *= -1;
     } else if (enemies[i].y <= this.enemyMinY && enemies[i].speed < 0) {
       enemies[i].speed *= -1;
     }
 
-    // enemy collision
+    // skeleton collision with player
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), enemies[i].getBounds())) {
       this.gameLose();
       break;
@@ -175,6 +177,7 @@ gameScene.gameWin = function() {
   // flag to set player is dead
   this.isPlayerAlive = false;
 
+  // victory music
   this.sound.play('powerUp');
 
   // make the camera flash when you win
