@@ -1,6 +1,20 @@
 // create a new scene named "Game"
 let gameScene = new Phaser.Scene('Game');
-let gameOver = document.querySelector("#game-over");
+let welcomeTitle;
+
+// game's configuration
+let config = {
+  type: Phaser.AUTO,
+  width: 960,
+  height: 544,
+  scene: gameScene, 
+  physics: {
+    default: 'arcade'
+  }
+};
+
+    // create the game, and pass it the configuration
+let game = new Phaser.Game(config);
 
 // some parameters for our scene
 gameScene.init = function() {
@@ -14,37 +28,40 @@ gameScene.init = function() {
 
 // load asset files for our game
 gameScene.preload = function() {
-  
   // load images
-  this.load.image('background', 'assets/background.png');
-  this.load.image('player', 'assets/player.png');
-  this.load.image('skeleton', 'assets/skeleton.png');
-  this.load.image('treasure', 'assets/treasure.png');
-
+  this.load.image('background', 'assets/images/background.png');
+  this.load.image('player', 'assets/images/player.png');
+  this.load.image('skeleton', 'assets/images/skeleton.png');
+  this.load.image('treasure', 'assets/images/treasure.png');
+  this.load.audio('backgroundMusic', 'assets/sounds/horror.mp3');
+  this.load.audio('fail', 'assets/sounds/game_fail.mp3');
+  this.load.audio('powerUp', 'assets/sounds/game_power_up.mp3');
+  this.load.audio('powerUp2', 'assets/sounds/game_power_up_2.mp3');
 };
 
 // executed once, after assets were loaded
 gameScene.create = function() {
-
-  // this.physics.startSystem(Phaser.Physics.ARCADE);
-  // this.physics.arcade.enable(this.player);
-
-  // this.player.body.collideWorldBounds = true;
   // background
-  let bg = this.add.sprite(0, 0, 'background');
-
+  let worldLayer = this.add.sprite(0, 0, 'background');
   // change origin to the top-left of the sprite
-  bg.setOrigin(0, 0);
+  worldLayer.setOrigin(0, 0);
+
+  //sounds
+  let fail = this.sound.add('fail');
+  let powerUp = this.sound.add('powerUp');
+  let powerUp2 = this.sound.add('powerUp2');
+  let backgroundMusic = this.sound.add('backgroundMusic');
+  backgroundMusic.play();
+  backgroundMusic.volume = 0.5;
+  backgroundMusic.loop = true;
 
   // player
   this.player = this.add.sprite(40, this.sys.game.config.height / 2, 'player');
 
-  // this.player.body.collideWorldBounds = true;
-
-  // scale down
+  // scale your player down
   this.player.setScale(0.5);
 
-  // goal
+  // treasture chest GOAL!!!
   this.treasure = this.add.sprite(this.sys.game.config.width - 80, this.sys.game.config.height / 2, 'treasure');
   this.treasure.setScale(0.6);
 
@@ -73,9 +90,26 @@ gameScene.create = function() {
 
   // reset camera
   this.cameras.main.resetFX();
+  
+  this.time.delayedCall(250, function() {
+    welcomeTitle = this.add.text(145, 500, 'Get to the chest in 30 seconds or less!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
+  }, [], this);
 
-  this.playerMaxX = -400;
-  this.playerMinX = 60;
+  let gameTimer = this.add.text(460, 20,'', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
+
+  let seconds = 30;
+
+  setInterval(function() {
+      if (seconds < 10) {
+          gameTimer.setText(`00:0${seconds}`);
+      } else {
+          gameTimer.setText(`00:${seconds}`);
+      }
+      seconds--;
+      if (seconds === 0) {
+        gameScene.gameLose();
+    }
+  }, 1000); 
 };
 
 // executed on every frame (60 times per second)
@@ -85,6 +119,8 @@ gameScene.update = function() {
   if (!this.isPlayerAlive) {
     return;
   }
+
+  // player controls
 
   if (cursors.right.isDown) {
     this.player.x += this.playerSpeed;
@@ -102,13 +138,6 @@ gameScene.update = function() {
   else if (cursors.up.isDown) {
     this.player.y -= this.playerSpeed;
   } 
-
-  // check for active input
-  // if (this.input.activePointer.isDown) {
-
-  //   // player walks
-  //   this.player.x += this.playerSpeed;
-  // }
 
   // treasure collision
   if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.treasure.getBounds())) {
@@ -140,53 +169,51 @@ gameScene.update = function() {
 };
 
 gameScene.gameWin = function() {
-
-  gameOver.innerHTML = "You Win!";
+  // set text with x and y coordinates
+  this.add.text(380, 250, 'You win!', { fontSize: '32px', fontFamily: 'Shojumaru', fill: '#E52346'});
 
   // flag to set player is dead
   this.isPlayerAlive = false;
 
+  this.sound.play('powerUp');
+
+  // make the camera flash when you win
+  this.cameras.main.flash(2000);
+
   // fade camera
   this.time.delayedCall(500, function() {
-    this.cameras.main.fade(500);
+    this.cameras.main.fade(3000);
   }, [], this);
 
   // restart game
-  this.time.delayedCall(1500, function() {
+  this.time.delayedCall(4000, function() {
     this.scene.restart();
     window.location.reload();
   }, [], this);
 };
 
 gameScene.gameLose = function() {
-
-  gameOver.innerHTML = "Loser!";
+  // set text with x and y coordinates
+  this.add.text(380, 250, 'Official loser!', { fontSize: '32px', fontFamily: 'Shojumaru', fill: '#E52346'});
 
   // flag to set player is dead
   this.isPlayerAlive = false;
 
+  this.sound.play('fail');
+
   // shake the camera
-  this.cameras.main.shake(1000);
+  this.cameras.main.shake(2000);
 
   // fade camera
   this.time.delayedCall(500, function() {
-    this.cameras.main.fade(500);
+    this.cameras.main.fade(3000);
   }, [], this);
 
   // restart game
-  this.time.delayedCall(1500, function() {
+  this.time.delayedCall(4000, function() {
     this.scene.restart();
     window.location.reload();
   }, [], this);
 };
 
-// our game's configuration
-let config = {
-  type: Phaser.AUTO,
-  width: 960,
-  height: 544,
-  scene: gameScene
-};
 
-// create the game, and pass it the configuration
-let game = new Phaser.Game(config);
