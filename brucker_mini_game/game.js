@@ -49,6 +49,7 @@ cursors,
 worldMap,
 timer,
 timerInterval,
+invincibleTimer,
 finalTime = 0;
 
 function preload() {
@@ -87,12 +88,12 @@ function create() {
         return componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
     
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
+    for (let i = 0; i < level.length; i++) {
+        for (let j = 0; j < level.length; j++) {
             if (level[i][j] === 1) {
                 let col = Phaser.Display.Color.RandomRGB(0,255),
                 randomColor = `0x${rgbToHex(col.r, col.g, col.b)}`;
-                blobs.create((j * 32) + 16, (i * 32) + 16, 'blob_child').setTint(randomColor).setScale(0.8);
+                blobs.create((j * 32) + 16, (i * 32) + 16, 'blob_child').setTint(randomColor).setScale(0.75);
             }
             if (level[i][j] === 2) {
                 gems.create((j * 32) + 16, (i * 32) + 16, 'gem').setScale(0.8);
@@ -233,7 +234,11 @@ function contactSkeletons(player, skeleton) {
     if (invincible) {
         skeleton.disableBody(true, true);
     } else {
-        blobs.playAnimation('collect');
+        for (let blob of blobs.getChildren()) {
+            if (blob.active) {
+                blob.anims.play('collect');
+            }
+        }
         this.add.text(320, 240, 'You Lost In', {fontSize: '42px', fill: '#00FF2D', fontFamily: 'Arial', stroke: '#000000', strokeThickness: 6}).setOrigin(0.5);
         this.add.text(320, 320, `${finalTime} Seconds`, {fontSize: '88px', fill: '#00FF2D', fontFamily: 'Arial', stroke: '#000000', strokeThickness: 8}).setOrigin(0.5);
         gameOver = true;
@@ -244,7 +249,8 @@ function collectGems(player, gem) {
     invincible = true;
     gem.disableBody(true, true);
     player.setTint(0xFF00FF);
-    setTimeout( () => {
+    clearTimeout(invincibleTimer);
+    invincibleTimer = setTimeout( () => {
         player.clearTint();
         invincible = false;
     }, 6000);
@@ -289,7 +295,8 @@ function findTiles(skeleton) {
         level[j][i - 1], // [3] Tile LEFT
         ((i * 32) + 16), // [4] Align X
         ((j * 32) + 16), // [5] Align Y
-        level[j][i]]     // [6] Current Tile
+        level[j][i],     // [6] Current Tile
+        i * j]           // [7] Unique Tile Id
 }
 
 function update() {
@@ -335,8 +342,8 @@ function update() {
     }
 
     if (player.x < 0) {
-        player.setX(640).setY(336);
-    } else if (player.x > 640) {
+        player.setX(639).setY(336);
+    } else if (player.x > 639) {
         player.setX(0).setY(336);
     }
 
@@ -351,145 +358,148 @@ function update() {
             skeleton.anims.play('skeleton_down', true);
         } else if (skeleton.body.velocity.y < 0) {
             skeleton.anims.play('skeleton_up', true);
+        } else {
+            skeleton.anims.play('skeleton_turn');
         }
 
         if (skeleton.x < 0) {
-            skeleton.setX(640).setY(336);
-        } else if (skeleton.x > 640) {
+            skeleton.setX(639).setY(336);
+        } else if (skeleton.x > 639) {
             skeleton.setX(0).setY(336);
         }
 
         let tiles = findTiles(skeleton);
-        if ( skeleton.body.blocked.down || skeleton.body.blocked.up || skeleton.body.blocked.left || skeleton.body.blocked.right && (tiles[6] != 0) ) {
-            let rand = Phaser.Math.Between(1,4);
-            if (rand === 1) {
-                skeleton.setVelocity(-60, 0);
-            } else if (rand === 2) {
-                skeleton.setVelocity(60, 0);
-            } else if (rand === 3) {
-                skeleton.setVelocity(0, -60);
-            } else {
-                skeleton.setVelocity(0, 60);
+        if (tiles[6] != 0) {
+            let rand_two = Phaser.Math.Between(1,3);
+            let rand_three = Phaser.Math.Between(1,3);
+            if (skeleton.body.blocked.up) {
+                if (rand_three === 1) {
+                    skeleton.setVelocity(-60, 0);
+                } else if (rand_three === 2) {
+                    skeleton.setVelocity(60, 0);
+                } else {
+                    skeleton.setVelocity(0, 60);
+                }
+            } else if (skeleton.body.blocked.down) {
+                if (rand_three === 1) {
+                    skeleton.setVelocity(-60, 0);
+                } else if (rand_three === 2) {
+                    skeleton.setVelocity(60, 0);
+                } else {
+                    skeleton.setVelocity(0, -60);
+                }
+            } else if (skeleton.body.blocked.left) {
+                if (rand_three === 1) {
+                    skeleton.setVelocity(60, 0);
+                } else if (rand_three === 2) {
+                    skeleton.setVelocity(0, -60);
+                } else {
+                    skeleton.setVelocity(0, 60);
+                }
+            } else if (skeleton.body.blocked.right) {
+                if (rand_three === 1) {
+                    skeleton.setVelocity(-60, 0);
+                } else if (rand_three === 2) {
+                    skeleton.setVelocity(0, -60);
+                } else {
+                    skeleton.setVelocity(0, 60);
+                }
+            }
+        
+            let distanceX = Math.abs(player.x - skeleton.x);
+            let distanceY = Math.abs(player.y - skeleton.y);
+            if (skeleton.name != tiles[7]) {
+                if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
+                    // 4 way intersection
+                    if (distanceX > distanceY) {
+                        if (player.x < skeleton.x) {
+                            skeleton.setVelocity(-60, 0);
+                            skeleton.y = tiles[5];
+                        } else {
+                            skeleton.setVelocity(60, 0);
+                            skeleton.y = tiles[5];
+                        }
+                    } else {
+                        if (player.y < skeleton.y) {
+                            skeleton.setVelocity(0, -60);
+                            skeleton.x = tiles[4];
+                        } else {
+                            skeleton.setVelocity(0, 60)
+                            skeleton.x = tiles[4];
+                        }
+                    }
+                } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
+                    // 3 way Left is blocked
+                    if (rand_three === 1) {
+                        skeleton.setVelocity(60, 0);
+                    } else if (rand_three === 2) {
+                        skeleton.setVelocity(0, -60);
+                    } else {
+                        skeleton.setVelocity(0, 60);
+                    }
+                } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] != 0) ) {
+                    // 3 way Down is blocked
+                    if (rand_three === 1) {
+                        skeleton.setVelocity(-60, 0);
+                    } else if (rand_three === 2) {
+                        skeleton.setVelocity(60, 0);
+                    } else {
+                        skeleton.setVelocity(0, -60);
+                    }
+                } else if ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
+                    // 3 way Right is blocked
+                    if (rand_three === 1) {
+                        skeleton.setVelocity(-60, 0);
+                    } else if (rand_three === 2) {
+                        skeleton.setVelocity(0, -60);
+                    } else {
+                        skeleton.setVelocity(0, 60);
+                    }
+                } else if ( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
+                    // 3 way Up is blocked
+                    if (rand_three === 1) {
+                        skeleton.setVelocity(-60, 0);
+                    } else if (rand_three === 2) {
+                        skeleton.setVelocity(60, 0);
+                    } else {
+                        skeleton.setVelocity(0, 60);
+                    }
+                } else if ( (tiles[0] === 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
+                    // 2 way Up & Right is blocked
+                    if (rand_two === 1) {
+                        skeleton.setVelocity(-60, 0);
+                    } else {
+                        skeleton.setVelocity(0, 60);
+                    }
+                } else if ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] === 0) && (tiles[3] != 0) ) {
+                    // 2 way Right & Down is blocked
+                    if (rand_two === 1) {
+                        skeleton.setVelocity(-60, 0);
+                    } else {
+                        skeleton.setVelocity(0, -60);
+                    }
+                } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] === 0) ) {
+                    // 2 way Down & Left is blocked
+                    if (rand_two === 1) {
+                        skeleton.setVelocity(60, 0);
+                    } else {
+                        skeleton.setVelocity(0, -60);
+                    }
+                } else if ( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
+                    // 2 way Left & Up is blocked
+                    if (rand_two === 1) {
+                        skeleton.setVelocity(60, 0);
+                    } else {
+                        skeleton.setVelocity(0, 60);
+                    }
+                }
+                if (skeleton.body.velocity.x != 0) {
+                    skeleton.y = tiles[5];
+                } else {
+                    skeleton.x = tiles[4];
+                }
+                skeleton.name = tiles[7];
             }
         }
-        //     let distanceX = Math.abs(player.x - skeleton.x);
-        //     let distanceY = Math.abs(player.y - skeleton.y);
-        //     if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
-        //         // 4 way intersection
-        //         if (distanceX > distanceY) {
-        //             if (player.x < skeleton.x) {
-        //                 skeleton.setVelocity(-60, 0);
-        //                 skeleton.y = tiles[5];
-        //             } else {
-        //                 skeleton.setVelocity(60, 0);
-        //                 skeleton.y = tiles[5];
-        //             }
-        //         } else {
-        //             if (player.y < skeleton.y) {
-        //                 skeleton.setVelocity(0, -60);
-        //                 skeleton.x = tiles[4];
-        //             } else {
-        //                 skeleton.setVelocity(0, 60)
-        //                 skeleton.x = tiles[4];
-        //             }
-        //         }
-        //     } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
-        //         // 3 way Left is blocked
-        //         if (distanceX > distanceY) {
-        //             skeleton.setVelocity(60, 0)
-        //             skeleton.y = tiles[5];
-        //         } else {
-        //             if (player.y < skeleton.y) {
-        //                 skeleton.setVelocity(0, -60)
-        //                 skeleton.x = tiles[4];
-        //             } else {
-        //                 skeleton.setVelocity(0, 60)
-        //                 skeleton.x = tiles[4];
-        //             }
-        //         }
-        //     } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] != 0) ) {
-        //         // 3 way Down is blocked
-        //         if (distanceX > distanceY) {
-        //             if (player.x < skeleton.x) {
-        //                 skeleton.setVelocity(-60, 0)
-        //                 skeleton.y = tiles[5];
-        //             } else {
-        //                 skeleton.setVelocity(60, 0)
-        //                 skeleton.y = tiles[5];
-        //             }
-        //         } else {
-        //             skeleton.setVelocity(0, -60)
-        //             skeleton.x = tiles[4];
-        //         }
-        //     } else if ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
-        //         // 3 way Right is blocked
-        //         if (distanceX > distanceY) {
-        //             skeleton.setVelocity(-60, 0)
-        //             skeleton.y = tiles[5];
-        //         } else {
-        //             if (player.y < skeleton.y) {
-        //                 skeleton.setVelocity(0, -60)
-        //                 skeleton.x = tiles[4];
-        //             } else {
-        //                 skeleton.setVelocity(0, 60)
-        //                 skeleton.x = tiles[4];
-        //             }
-        //         }
-        //     } else if ( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
-        //         // 3 way Up is blocked
-        //         if (distanceX > distanceY) {
-        //             if (player.x < skeleton.x) {
-        //                 skeleton.setVelocity(-60, 0)
-        //                 skeleton.y = tiles[5];
-        //             } else {
-        //                 skeleton.setVelocity(60, 0)
-        //                 skeleton.y = tiles[5];
-        //             }
-        //         } else {
-        //             skeleton.setVelocity(0, 60)
-        //             skeleton.x = tiles[4];
-        //         }
-        //     } else if ( (tiles[0] === 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
-        //         // 2 way Up & Right is blocked
-        //         if (distanceX > distanceY) {
-        //             skeleton.setVelocity(-60, 0)
-        //             skeleton.y = tiles[5];
-        //         } else {
-        //             skeleton.setVelocity(0, 60)
-        //             skeleton.x = tiles[4];
-        //         }
-        //     } else if ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] === 0) && (tiles[3] != 0) ) {
-        //         // 2 way Right & Down is blocked
-        //         if (distanceX > distanceY) {
-        //             skeleton.setVelocity(-60, 0)
-        //             skeleton.y = tiles[5];
-        //         } else {
-        //             skeleton.setVelocity(0, -60)
-        //             skeleton.x = tiles[4];
-        //         }
-        //     } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] === 0) ) {
-        //         // 2 way Down & Left is blocked
-        //         if (distanceX > distanceY) {
-        //             skeleton.setVelocity(60, 0)
-        //             skeleton.y = tiles[5];
-        //         } else {
-        //             skeleton.setVelocity(0, -60)
-        //             skeleton.x = tiles[4];
-        //         }
-        //     } else if ( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
-        //         // 2 way Left & Up is blocked
-        //         if (distanceX > distanceY) {
-        //             skeleton.setVelocity(60, 0)
-        //             skeleton.y = tiles[5];
-        //         } else {
-        //             skeleton.setVelocity(0, 60)
-        //             skeleton.x = tiles[4];
-        //         }
-        //     }
-        // }
-
-        // if (( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] != 0) ) ||
-        //     ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] === 0) )) {
-        // }
     }
 }
