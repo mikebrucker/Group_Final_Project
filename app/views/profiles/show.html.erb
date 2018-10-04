@@ -1,0 +1,60 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <%= image_tag @profile.avatar.variant(resize: "100x100") %>
+</p>
+
+<p>
+  <strong>Fname:</strong> <%= @profile.fname %>
+</p>
+
+<p>
+  <strong>Lname:</strong> <%= @profile.lname %>
+</p>
+
+<p>
+  <strong>Total games played:</strong> <%= @profile.total_games_played %>
+</p>
+
+<p>
+  <strong>Blob games played:</strong> <%= @profile.blob_games_played %>
+</p>
+
+<p>
+  <strong>Blob games won:</strong> <%= @profile.blob_games_won %>
+</p>
+
+<p>
+  <strong>Blob games lost:</strong> <%= @profile.blob_games_lost %>
+</p>
+
+<p>
+  <strong>Blob game high score:</strong> <%= @profile.blob_game_high_score %>
+</p>
+
+<p>
+  <strong>Ogre games played:</strong> <%= @profile.ogre_games_played %>
+</p>
+
+<p>
+  <strong>Ogre games won:</strong> <%= @profile.ogre_games_won %>
+</p>
+
+<p>
+  <strong>Ogre games lost:</strong> <%= @profile.ogre_games_lost %>
+</p>
+
+<p>
+  <strong>Ogre game high score:</strong> <%= @profile.ogre_game_high_score %>
+</p>
+
+<p>
+  <strong>Sky games played:</strong> <%= @profile.sky_games_played %>
+</p>
+
+<p>
+  <strong>Sky game high score:</strong> <%= @profile.sky_game_high_score %>
+</p>
+
+<%= link_to 'Edit', edit_profile_path(@profile) %> |
+<%= link_to 'Back', profiles_path %>
