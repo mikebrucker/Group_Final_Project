@@ -1,4 +1,4 @@
-let StateInstructions = {
+const StateInstructions = {
 
     preload: function () {
         game.load.image("background","images/main/background.png");
