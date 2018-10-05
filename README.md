@@ -6,7 +6,7 @@ BRB Arcade with 3 Mini-Games
   
 Blob Man created by Mike Brucker [https://github.com/mikebrucker]  
 Ogre Crossing created by Angel Rodriguez [https://github.com/angelr1076]  
-Sky High createed by Mario Borras [https://github.com/marioborras]  
+Sky High created by Mario Borras [https://github.com/marioborras]  
   
 Games created with the Phaser3 Javascript library [https://github.com/photonstorm/phaser]  
   
