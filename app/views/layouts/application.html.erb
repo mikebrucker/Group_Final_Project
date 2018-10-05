@@ -10,12 +10,16 @@
   </head>
 
   <body>
-    <% if current_user %>
-      <nav>
+    <nav>
+        <a href="/users/sign_in"><div>Log in</div></a>
+        <a href="/users/sign_up"><div>Sign Up</div></a>
+      
+      <% if current_user %>
+        <a href="/logout"><div>Log Out</div></a>
         <a href="/profiles<% current_user.profile.id %>"><div>Profile</div></a>
         <a href="/games"><div>Games</div></a>
-      </nav>
-    <% end %>
+      <% end %>
+    </nav>
     <%= yield %>
   </body>
 </html>
