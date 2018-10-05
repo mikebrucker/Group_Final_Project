@@ -1,4 +1,4 @@
-$(window).on("turbolinks:load", function() {
+$(window).on("load", function() {
     function readURL(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
