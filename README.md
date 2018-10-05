@@ -1,24 +1,17 @@
-# README
+NYCDA Group Final Project
+======================================================================================
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+BRB Arcade with 3 Mini-Games
+--------------------------------------------------------------------------------------
 
-Things you may want to cover:
+Blob Man created by Mike Brucker [https://github.com/mikebrucker]
+Ogre Crossing created by Angel Rodriguez [https://github.com/angelr1076]
+Sky High createed by Mario Borras [https://github.com/marioborras]
 
-* Ruby version
+Games created with the Phaser3 Javascript library [https://github.com/photonstorm/phaser]
 
-* System dependencies
+BRB Arcade is hosted on Heroku at [https://brb-arcade.herokuapp.com]
 
-* Configuration
+Sign Up, Log In and play the games.
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+We used Ruby on Rails as the Framework.
