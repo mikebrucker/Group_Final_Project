@@ -1,7 +1,11 @@
 <p id="notice"><%= notice %></p>
 
 <p>
+<%if @profile.avatar.attached? %>
   <%= image_tag @profile.avatar.variant(resize: "100x100") %>
+  <%else%>
+  <%= image_tag 'joystick.png', size: "100x100"  %>
+<%end%>
 </p>
 
 <p>
