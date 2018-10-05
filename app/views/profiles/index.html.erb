@@ -26,7 +26,12 @@
   <tbody>
     <% @profiles.each do |profile| %>
       <tr>
-        <td><%= image_tag profile.avatar.variant(resize: "100x100") %></td>
+        <td>
+        <%if profile.avatar.attached? %>
+          <%= image_tag profile.avatar.variant(resize: "100x100") %>
+        <%else%>
+        <%= image_tag 'joystick.png', size: "100x100"  %>
+        <%end%></td>
         <td><%= profile.fname %></td>
         <td><%= profile.lname %></td>
         <td><%= profile.total_games_played %></td>

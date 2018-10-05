@@ -2,25 +2,33 @@
 <html>
   <head>
     <title>GroupFinalProject</title>
+        <%= favicon_link_tag asset_path('joystick.png'), :rel => 'icon', :type =>  'image/png' %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Shojumaru" rel="stylesheet">
     <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
     <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
   </head>
 
-  <body>
+  <body class ="splash">
     <nav>
-        <a href="/users/sign_in"><div>Log in</div></a>
-        <a href="/users/sign_up"><div>Sign Up</div></a>
-      
-      <% if current_user %>
-        <a href="/logout"><div>Log Out</div></a>
-        <% if current_user.profile %>
-        <a href="/profiles<% current_user.profile.id %>"><div>Profile</div></a>
-        <% end %>
-        <a href="/games"><div>Games</div></a>
-      <% end %>
+        <div class="nav-wrapper purple">
+            <a href="#" class="brand-logo right">Arcade</a>
+            <ul id="nav-mobile" class="left hide-on-med-and-down">
+            <%if !current_user%>
+              <li><a href="/users/sign_in">Log in</a></li>
+              <li><a href="/users/sign_up">Sign Up</a></li>
+            <% end %>
+          <% if current_user %>
+              <li><a href="/logout">Log Out</a></li>
+          <% if current_user.profile %>
+              <li><a href="/profiles<% current_user.profile.id %>">Profile</a></li>
+          <% end %>
+              <li><a href="/games">Games</a></li>
+          <% end %>
+            </ul>
+        </div>
     </nav>
     <%= yield %>
   </body>
