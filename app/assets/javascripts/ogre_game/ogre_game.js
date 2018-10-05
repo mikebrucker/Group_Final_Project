@@ -9,7 +9,8 @@ let config = {
   type: Phaser.AUTO,
   width: 960,
   height: 544,
-  scene: gameScene
+  scene: gameScene,
+  parent: 'game'
 };
 
 // create a new game

@@ -3,6 +3,7 @@ let config = {
     parent: 'content',
     width: 640,
     height: 640,
+    parent: 'gamecontainer',
     physics: {
         default: 'arcade',
         arcade: {
