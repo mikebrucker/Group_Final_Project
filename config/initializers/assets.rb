@@ -22,3 +22,4 @@ Rails.application.config.assets.precompile += %w( sky_game/stateInstructions.js 
 Rails.application.config.assets.precompile += %w( sky_game/stateMain.js )
 Rails.application.config.assets.precompile += %w( sky_game/stateOver.js )
 Rails.application.config.assets.precompile += %w( sky_game/stateTitle.js )
+Rails.application.config.assets.precompile += %w( avatar_preview.js )
