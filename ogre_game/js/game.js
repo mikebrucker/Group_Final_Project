@@ -37,6 +37,7 @@ gameScene.preload = function() {
   this.load.audio('fail', 'assets/sounds/game_fail.mp3');
   this.load.audio('powerUp', 'assets/sounds/game_power_up.mp3');
   this.load.audio('powerUp2', 'assets/sounds/game_power_up_2.mp3');
+  this.load.audio('timeUp', 'assets/sounds/siren.mp3');
 };
 
 // executed once, after assets were loaded
@@ -50,6 +51,7 @@ gameScene.create = function() {
   let fail = this.sound.add('fail');
   let powerUp = this.sound.add('powerUp');
   let powerUp2 = this.sound.add('powerUp2');
+  let timeUp = this.sound.add('timeUp');
   let backgroundMusic = this.sound.add('backgroundMusic');
   backgroundMusic.play();
   backgroundMusic.volume = 0.4;
@@ -72,9 +74,10 @@ gameScene.create = function() {
     key: 'skeleton',
     repeat: 8,
     setXY: {
-      //set X and Y axis 
+      //sets X and Y axis starting point for skeletons
       x: 80,
       y: 100,
+      //sets distance between skeletons
       stepX: 100,
       stepY: 10
     }
@@ -112,9 +115,14 @@ gameScene.create = function() {
           gameTimer.setText(`00:${seconds}`);
       }
       seconds--;
-
+      //5 second warning
+      if (seconds === 5) {
+        backgroundMusic.stop();
+        timeUp.play();
+        welcomeTitle = this.add.text(460, 20,'Time is almost up!!!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
+      }
       // game over if seconds reach 0
-      if (seconds === 0) {
+      if (seconds === 0 || !gameWin()) {
         gameScene.gameLose();
     }
     // seconds decrement by 1
@@ -171,7 +179,6 @@ gameScene.update = function() {
       enemies[i].speed *= -1;
     }
 
-
     // skeleton collision with player
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), enemies[i].getBounds())) {
       this.gameLose();
@@ -208,8 +215,6 @@ gameScene.gameWin = function() {
 gameScene.gameLose = function() {
   // set text with x and y coordinates
   this.add.text(380, 250, 'Official loser!', { fontSize: '32px', fontFamily: 'Shojumaru', fill: '#E52346'});
-
-  seconds = 0;
 
   // flag to set player is dead
   this.isPlayerAlive = false;
