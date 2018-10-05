@@ -16,7 +16,9 @@
       
       <% if current_user %>
         <a href="/logout"><div>Log Out</div></a>
+        <% if current_user.profile %>
         <a href="/profiles<% current_user.profile.id %>"><div>Profile</div></a>
+        <% end %>
         <a href="/games"><div>Games</div></a>
       <% end %>
     </nav>
