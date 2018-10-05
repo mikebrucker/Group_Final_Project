@@ -1,4 +1,4 @@
-var config = {
+let config = {
     type: Phaser.AUTO,
     parent: 'content',
     width: 640,
@@ -15,6 +15,15 @@ var config = {
         create: create,
         update: update
     }
+},
+music_config = {
+    mute: false,
+    volume: 0.8,
+    rate: 1,
+    detune: 0,
+    seek: 0,
+    loop: true,
+    delay: 0
 };
 
 const game = new Phaser.Game(config);
@@ -43,10 +52,12 @@ const level = [
 let gameOver = false,
 invincible = false,
 player,
+rises,
 blobs,
 gems,
 cursors,
 worldMap,
+music,
 timer,
 timerInterval,
 invincibleTimer,
@@ -62,14 +73,26 @@ function preload() {
     this.load.spritesheet('blob_right', 'assets/blob_walk_right_yellow.png', { frameWidth: 34, frameHeight: 34 });
     this.load.spritesheet('gem', 'assets/gem.png', { frameWidth: 20, frameHeight: 30 });
     this.load.spritesheet('skeleton', 'assets/skeleton_sprite_sheet.png', { frameWidth: 32, frameHeight: 48 });
+    this.load.spritesheet('skeleton_rise', 'assets/skeleton_rise.png', { frameWidth: 32, frameHeight: 48 });
     this.load.image('tiles', 'assets/tileset.png');
-    this.load.tilemapTiledJSON("map", "assets/blobmap.json");
+    this.load.tilemapTiledJSON('map', 'assets/blobmap.json');
+    this.load.audio('victory', 'assets/audio/victory.wav');
+    this.load.audio('death', 'assets/audio/death.wav');
+    this.load.audio('pop', 'assets/audio/pop.wav');
+    this.load.audio('gem_on', 'assets/audio/gem_on.wav');
+    this.load.audio('gem_off', 'assets/audio/gem_off.wav');
+    this.load.audio('teleport', 'assets/audio/teleport.wav');
+    this.load.audio('rise', 'assets/audio/rise.wav');
+    this.load.audio('skeleton_death', 'assets/audio/skeleton_death.wav');
+    this.load.audio('game_track', 'assets/audio/game_track.mp3');
 }
 
 function create() {
-    const map = this.make.tilemap({ key: "map" });
-    const tileset = map.addTilesetImage("tileset", "tiles");
-    const worldLayer = map.createStaticLayer("World", tileset, 0, 0);
+    music = this.sound.add('game_track', music_config);
+    music.play();
+    const map = this.make.tilemap({ key: 'map' });
+    const tileset = map.addTilesetImage('tileset', 'tiles');
+    const worldLayer = map.createStaticLayer('World', tileset, 0, 0);
     worldMap = worldLayer;
     
     worldLayer.setCollisionBetween(1, 213, true, 'World');
@@ -80,6 +103,7 @@ function create() {
     blobs = this.physics.add.group();
     gems = this.physics.add.group();
     skeletons = this.physics.add.group();
+    rises = this.physics.add.group();
     cursors = this.input.keyboard.createCursorKeys();
     
     function componentToHex(c) {
@@ -102,10 +126,23 @@ function create() {
             }
         }
     }
+    let rise_sound = this.sound.add('rise', { volume: 3 });
     createSkeletons = setInterval(function() {
         if (skeletons.countActive(true) < maxSkeletons) {
-            let skeleton = skeletons.create(320, 352, 'skeleton');
-            skeleton.setScale(0.666).setVelocityY(-60)
+            let rise = rises.create(320, 352, 'skeleton_rise');
+            if (invincible) {
+                rise.setTint(0x00DDFF)
+            }
+            rise.displayHeight = 32;
+            rise.displayWidth = 21.333333;
+            rise.anims.play('skeleton_rise');
+            rise_sound.play();
+            rise.on('animationcomplete', function() {
+                rise.disableBody(true, true);
+                let skeleton = skeletons.create(320, 352, 'skeleton');
+                skeleton.displayHeight = 32;
+                skeleton.displayWidth = 21.333333;
+            });
         }
     }, 5000);
     player = this.physics.add.sprite(320, 496, 'blob').setSize(32, 32);
@@ -168,29 +205,35 @@ function create() {
     this.anims.create({
         key: 'skeleton_down',
         frames: this.anims.generateFrameNumbers('skeleton', { start: 0, end: 3 }),
-        frameRate: 6,
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'skeleton_up',
         frames: this.anims.generateFrameNumbers('skeleton', { start: 4, end: 7 }),
-        frameRate: 6,
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'skeleton_right',
         frames: this.anims.generateFrameNumbers('skeleton', { start: 8, end: 11 }),
         flipX: false,
-        frameRate: 6,
+        frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'skeleton_left',
         frames: this.anims.generateFrameNumbers('skeleton', { start: 8, end: 11 }),
         flipX: true,
-        frameRate: 6,
+        frameRate: 10,
         repeat: -1
     });
+    this.anims.create({
+        key: 'skeleton_rise',
+        frames: this.anims.generateFrameNumbers('skeleton_rise', { start: 0, end: 7 }),
+        frameRate: 10,
+        repeat: 0
+    })
     this.anims.create({
         key: 'skeleton_turn',
         frames: [ { key: 'skeleton', frame: 1 } ],
@@ -205,7 +248,7 @@ function create() {
         } else {
             setTimeout( () => {
                 blob.anims.play('idle', true);
-            }, 640);
+            }, 400);
         }
     }
 
@@ -228,6 +271,9 @@ function create() {
 }
 
 function collectBlobs(player, blob) {
+    blob.on('animationstart', function() {
+        this.sound.play('pop');
+    }.bind(this));
     blob.anims.play('collect', true);
     blob.on('animationcomplete', function() {
         blob.disableBody(true, false);
@@ -236,8 +282,10 @@ function collectBlobs(player, blob) {
 
 function contactSkeletons(player, skeleton) {
     if (invincible) {
+        this.sound.play('skeleton_death')
         skeleton.disableBody(true, true);
     } else {
+        this.sound.play('death')
         for (let blob of blobs.getChildren()) {
             if (blob.active) {
                 blob.anims.play('collect');
@@ -250,11 +298,13 @@ function contactSkeletons(player, skeleton) {
 }
 
 function collectGems(player, gem) {
+    this.sound.play('gem_on')
     invincible = true;
     gem.disableBody(true, true);
     player.setTint(0xFF00FF);
     clearTimeout(invincibleTimer);
     invincibleTimer = setTimeout( () => {
+        this.sound.play('gem_off')
         player.clearTint();
         invincible = false;
     }, 6000);
@@ -308,6 +358,7 @@ function findTiles(skeleton) {
 
 function update() {
     if (gameOver) {
+        music.stop();
         clearInterval(gameTimer);
         clearInterval(createSkeletons);
         this.physics.pause();
@@ -317,6 +368,7 @@ function update() {
     }
 
     if (blobs.countActive(true) === 0) {
+        this.sound.play('victory');
         console.log(finalTime);
         this.add.text(320, 240, 'You Collected All Blobs In', {fontSize: '42px', fill: '#00FF2D', fontFamily: 'Arial', stroke: '#000000', strokeThickness: 6}).setOrigin(0.5);
         this.add.text(320, 320, `${finalTime} Seconds`, {fontSize: '88px', fill: '#00FF2D', fontFamily: 'Arial', stroke: '#000000', strokeThickness: 8}).setOrigin(0.5);
@@ -349,12 +401,26 @@ function update() {
     }
 
     if (player.x < 0) {
+        this.sound.play('teleport');
         player.setX(639).setY(336);
     } else if (player.x > 639) {
+        this.sound.play('teleport');
         player.setX(0).setY(336);
     }
 
     for (let skeleton of skeletons.getChildren()) {
+        if ( (skeleton.body.velocity.x === 0) && (skeleton.body.velocity.y === 0) ) {
+            setTimeout(function() {
+                skeleton.setVelocityY(-60);
+            }, 500);
+        }
+
+        if (invincible) {
+            skeleton.setTint(0x00DDFF);
+        } else {
+            skeleton.clearTint();
+        }
+
         if (skeleton.body.velocity.x < 0) {
             skeleton.anims.play('skeleton_left', true);
             skeleton.flipX = true;
@@ -386,9 +452,9 @@ function update() {
             // Skeleton chooses to go left or right after rising from the crypt
             if ( (tiles[6] === 8) && (skeleton.name === '') && (skeletonTileY < 1) ) {
                 if (rand_two === 1) {
-                    skeleton.setVelocity(-60, 0);
+                    skeleton.setVelocity(-80, 0);
                 } else {
-                    skeleton.setVelocity(60, 0);
+                    skeleton.setVelocity(80, 0);
                 }
                 skeleton.name = tiles[7];
             }
@@ -398,77 +464,77 @@ function update() {
                 if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
                     // 4 way intersection
                     if (rand_four === 1) {
-                        skeleton.setVelocity(-60, 0);
+                        skeleton.setVelocity(-80, 0);
                     } else if (rand_four === 2) {
-                        skeleton.setVelocity(60, 0);
+                        skeleton.setVelocity(80, 0);
                     } else if (rand_four === 3) {
-                        skeleton.setVelocity(0, -60);
+                        skeleton.setVelocity(0, -80);
                     } else {
-                        skeleton.setVelocity(0, 60)
+                        skeleton.setVelocity(0, 80)
                     }
                 } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
                     // 3 way Left is blocked
                     if (rand_three === 1) {
-                        skeleton.setVelocity(60, 0);
+                        skeleton.setVelocity(80, 0);
                     } else if (rand_three === 2) {
-                        skeleton.setVelocity(0, -60);
+                        skeleton.setVelocity(0, -80);
                     } else {
-                        skeleton.setVelocity(0, 60);
+                        skeleton.setVelocity(0, 80);
                     }
                 } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] != 0) ) {
                     // 3 way Down is blocked
                     if (rand_three === 1) {
-                        skeleton.setVelocity(-60, 0);
+                        skeleton.setVelocity(-80, 0);
                     } else if (rand_three === 2) {
-                        skeleton.setVelocity(60, 0);
+                        skeleton.setVelocity(80, 0);
                     } else {
-                        skeleton.setVelocity(0, -60);
+                        skeleton.setVelocity(0, -80);
                     }
                 } else if ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
                     // 3 way Right is blocked
                     if (rand_three === 1) {
-                        skeleton.setVelocity(-60, 0);
+                        skeleton.setVelocity(-80, 0);
                     } else if (rand_three === 2) {
-                        skeleton.setVelocity(0, -60);
+                        skeleton.setVelocity(0, -80);
                     } else {
-                        skeleton.setVelocity(0, 60);
+                        skeleton.setVelocity(0, 80);
                     }
                 } else if ( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
                     // 3 way Up is blocked
                     if (rand_three === 1) {
-                        skeleton.setVelocity(-60, 0);
+                        skeleton.setVelocity(-80, 0);
                     } else if (rand_three === 2) {
-                        skeleton.setVelocity(60, 0);
+                        skeleton.setVelocity(80, 0);
                     } else {
-                        skeleton.setVelocity(0, 60);
+                        skeleton.setVelocity(0, 80);
                     }
                 } else if ( (tiles[0] === 0) && (tiles[1] === 0) && (tiles[2] != 0) && (tiles[3] != 0) ) {
                     // 2 way Up & Right is blocked
                     if (rand_two === 1) {
-                        skeleton.setVelocity(-60, 0);
+                        skeleton.setVelocity(-80, 0);
                     } else {
-                        skeleton.setVelocity(0, 60);
+                        skeleton.setVelocity(0, 80);
                     }
                 } else if ( (tiles[0] != 0) && (tiles[1] === 0) && (tiles[2] === 0) && (tiles[3] != 0) ) {
                     // 2 way Right & Down is blocked
                     if (rand_two === 1) {
-                        skeleton.setVelocity(-60, 0);
+                        skeleton.setVelocity(-80, 0);
                     } else {
-                        skeleton.setVelocity(0, -60);
+                        skeleton.setVelocity(0, -80);
                     }
                 } else if ( (tiles[0] != 0) && (tiles[1] != 0) && (tiles[2] === 0) && (tiles[3] === 0) ) {
                     // 2 way Down & Left is blocked
                     if (rand_two === 1) {
-                        skeleton.setVelocity(60, 0);
+                        skeleton.setVelocity(80, 0);
                     } else {
-                        skeleton.setVelocity(0, -60);
+                        skeleton.setVelocity(0, -80);
                     }
                 } else if ( (tiles[0] === 0) && (tiles[1] != 0) && (tiles[2] != 0) && (tiles[3] === 0) ) {
                     // 2 way Left & Up is blocked
                     if (rand_two === 1) {
-                        skeleton.setVelocity(60, 0);
+                        skeleton.setVelocity(80, 0);
                     } else {
-                        skeleton.setVelocity(0, 60);
+                        skeleton.setVelocity(0, 80);
                     }
                 }
 
