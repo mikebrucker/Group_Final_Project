@@ -9,6 +9,7 @@ let config = {
   type: Phaser.AUTO,
   width: 960,
   height: 544,
+  parent: "gamecontainer",
   scene: gameScene
 };
 
