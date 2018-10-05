@@ -10,6 +10,12 @@
   </head>
 
   <body>
+    <% if current_user %>
+      <nav>
+        <a href="/profiles<% current_user.profile.id %>"><div>Profile</div></a>
+        <a href="/games"><div>Games</div></a>
+      </nav>
+    <% end %>
     <%= yield %>
   </body>
 </html>
