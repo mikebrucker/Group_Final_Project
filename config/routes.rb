@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   get '/ogre_crossing' => 'games#ogre_crossing'
   devise_for :users
   devise_scope :user do
+    get '/logout' => 'devise/sessions#destroy'
     unauthenticated do
       root :to => 'devise/sessions#new'
     end

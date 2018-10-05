@@ -12,3 +12,13 @@ Rails.application.config.assets.paths << Rails.root.join('node_modules')
 # application.js, application.css, and all non-JS/CSS in the app/assets
 # folder are already added.
 # Rails.application.config.assets.precompile += %w( admin.js admin.css )
+
+Rails.application.config.assets.precompile += %w( dist/phaser.js )
+Rails.application.config.assets.precompile += %w( dist/phaser2.min.js )
+Rails.application.config.assets.precompile += %w( blob_game/blob_game.js )
+Rails.application.config.assets.precompile += %w( ogre_game/ogre_game.js )
+Rails.application.config.assets.precompile += %w( sky_game/sky_game.js )
+Rails.application.config.assets.precompile += %w( sky_game/stateInstructions.js )
+Rails.application.config.assets.precompile += %w( sky_game/stateMain.js )
+Rails.application.config.assets.precompile += %w( sky_game/stateOver.js )
+Rails.application.config.assets.precompile += %w( sky_game/stateTitle.js )
