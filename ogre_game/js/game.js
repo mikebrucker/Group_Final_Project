@@ -2,6 +2,7 @@
 let gameScene = new Phaser.Scene('Game');
 let welcomeTitle;
 let player;
+let timedFunction;
 
 // game's configuration
 let config = {
@@ -119,10 +120,9 @@ gameScene.create = function() {
       if (seconds === 5) {
         backgroundMusic.stop();
         timeUp.play();
-        welcomeTitle = this.add.text(460, 20,'Time is almost up!!!', { fontSize: '24px', fontFamily: 'Shojumaru', fill: '#FFFFFF' });
       }
       // game over if seconds reach 0
-      if (seconds === 0 || !gameWin()) {
+      if (seconds === 0) {
         gameScene.gameLose();
     }
     // seconds decrement by 1
@@ -210,6 +210,14 @@ gameScene.gameWin = function() {
     this.scene.restart();
     window.location.reload();
   }, [], this);
+
+  var timedFunction = (function(){
+    var count = 0;
+    return function(){
+         count++
+         console.log( "gameWin has been called " + count + " times");
+    }
+})();
 };
 
 gameScene.gameLose = function() {
@@ -234,6 +242,14 @@ gameScene.gameLose = function() {
     this.scene.restart();
     window.location.reload();
   }, [], this);
+
+  var timedFunction = (function(){
+    var count = 0;
+    return function(){
+         count++
+         console.log("gameLoss have been called " + count + " times");
+    }
+})();
 };
 
 
