@@ -13,22 +13,22 @@
 
   <body class ="splash">
     <nav>
-        <div class="nav-wrapper purple">
-            <a href="#" class="brand-logo right">Arcade</a>
-            <ul id="nav-mobile" class="left hide-on-med-and-down">
-            <%if !current_user%>
-              <li><a href="/users/sign_in">Log in</a></li>
-              <li><a href="/users/sign_up">Sign Up</a></li>
-            <% end %>
-          <% if current_user %>
-              <li><a href="/logout">Log Out</a></li>
+      <div class="nav-wrapper purple">
+      <a href="#" class="brand-logo right">Arcade</a>
+      <ul id="nav-mobile" class="left hide-on-med-and-down">
+        <%if !current_user%>
+          <li><a href="/users/sign_in">Log in</a></li>
+          <li><a href="/users/sign_up">Sign Up</a></li>
+        <% end %>
+        <% if current_user %>
+          <li><a href="/logout">Log Out</a></li>
           <% if current_user.profile %>
-              <li><a href="/profiles<% current_user.profile.id %>">Profile</a></li>
+            <li><a href="/profiles/<% current_user.profile.id %>">Profile</a></li>
           <% end %>
-              <li><a href="/games">Games</a></li>
-          <% end %>
-            </ul>
-        </div>
+        <li><a href="/games">Games</a></li>
+        <% end %>
+      </ul>
+      </div>
     </nav>
     <%= yield %>
   </body>
